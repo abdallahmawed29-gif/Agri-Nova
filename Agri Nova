@@ -1,0 +1,867 @@
+{
+  "name": "agrinova",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^8.3.4"
+  }
+}<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="زرع AI - المساعد الزراعي الذكي" />
+    <title>زرع AI</title>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()]
+})src/main.jsximport React, { useMemo, useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import './style.css'
+
+const crops = {
+  'خضروات': ['طماطم', 'خيار', 'فلفل', 'بطاطس'],
+  'فاكهة': ['فراولة', 'عنب', 'موالح', 'مانجو'],
+  'حبوب': ['قمح', 'ذرة', 'أرز'],
+  'محاصيل حقلية': ['برسيم', 'فول', 'بنجر السكر']
+}
+
+const cropInfo = {
+  'طماطم': {
+    water: 'ري منتظم مع تجنب التغريق',
+    soil: 'تربة جيدة الصرف',
+    salinity: 'متوسطة التحمل',
+    tips: 'راقب الأوراق السفلية والعفن والآفات.'
+  },
+
+  'خيار': {
+    water: 'احتياج مائي مرتفع نسبيًا',
+    soil: 'تربة خصبة جيدة الصرف',
+    salinity: 'حساسية للملوحة',
+    tips: 'راقب الذبول والبياض الدقيقي.'
+  },
+
+  'فلفل': {
+    water: 'ري منتظم حسب رطوبة التربة',
+    soil: 'تربة جيدة التهوية والصرف',
+    salinity: 'حساسية متوسطة',
+    tips: 'راقب الثمار والأوراق بحثًا عن الآفات.'
+  },
+
+  'بطاطس': {
+    water: 'انتظام الري مهم خصوصًا أثناء تكوين الدرنات',
+    soil: 'تربة رملية طميية جيدة الصرف',
+    salinity: 'حساسية متوسطة',
+    tips: 'تجنب زيادة الرطوبة ومراقبة الندوات.'
+  },
+
+  'فراولة': {
+    water: 'ري متقارب بكميات محسوبة',
+    soil: 'تربة خفيفة جيدة الصرف',
+    salinity: 'حساسة للملوحة',
+    tips: 'راقب الجذور والثمار والرطوبة.'
+  },
+
+  'عنب': {
+    water: 'حسب مرحلة النمو والجو',
+    soil: 'تربة جيدة الصرف',
+    salinity: 'متوسطة التحمل',
+    tips: 'راقب العناقيد والأوراق.'
+  },
+
+  'موالح': {
+    water: 'ري عميق ومنتظم حسب الظروف',
+    soil: 'تربة جيدة الصرف',
+    salinity: 'تختلف حسب الأصل والصنف',
+    tips: 'راقب الأوراق والجذور ونقص العناصر.'
+  },
+
+  'مانجو': {
+    water: 'يختلف حسب العمر والمرحلة',
+    soil: 'تربة عميقة جيدة الصرف',
+    salinity: 'متوسطة الحساسية',
+    tips: 'راقب النمو الحديث والأزهار.'
+  },
+
+  'قمح': {
+    water: 'حسب مراحل النمو واحتياج التربة',
+    soil: 'تربة جيدة الصرف',
+    salinity: 'تحمل متوسط',
+    tips: 'راقب الصدأ والحشائش.'
+  },
+
+  'ذرة': {
+    water: 'يزداد الاحتياج في مراحل النمو الحرجة',
+    soil: 'تربة خصبة جيدة الصرف',
+    salinity: 'تحمل متوسط',
+    tips: 'راقب الأوراق والآفات.'
+  },
+
+  'أرز': {
+    water: 'نظام الري يختلف حسب طريقة الزراعة',
+    soil: 'تربة مناسبة لاحتفاظ نسبي بالماء',
+    salinity: 'تختلف حسب الصنف',
+    tips: 'راقب الملوحة والحشائش والآفات.'
+  },
+
+  'برسيم': {
+    water: 'حسب الموسم والتربة',
+    soil: 'تربة جيدة الصرف',
+    salinity: 'تحمل نسبي',
+    tips: 'راقب كثافة النمو والآفات.'
+  },
+
+  'فول': {
+    water: 'ري متوازن وتجنب التغريق',
+    soil: 'تربة جيدة الصرف',
+    salinity: 'حساسية متوسطة',
+    tips: 'راقب البقع والآفات.'
+  },
+
+  'بنجر السكر': {
+    water: 'انتظام الري مهم حسب المرحلة',
+    soil: 'تربة عميقة جيدة الصرف',
+    salinity: 'تحمل نسبي',
+    tips: 'راقب الجذور والأوراق.'
+  }
+}
+
+function App() {
+  const [tab, setTab] = useState('home')
+  const [group, setGroup] = useState('خضروات')
+  const [crop, setCrop] = useState('طماطم')
+  const [age, setAge] = useState('30')
+  const [question, setQuestion] = useState('')
+  const [image, setImage] = useState(null)
+  const [answer, setAnswer] = useState('')
+
+  const info = useMemo(
+    () =>
+      cropInfo[crop] || {
+        water: 'يحدد حسب المرحلة والظروف',
+        soil: 'يحدد حسب المحصول وتحليل التربة',
+        salinity: 'تختلف حسب الصنف',
+        tips: 'ارفع صورة أو اسأل المساعد للحصول على تحليل أكثر تخصيصًا.'
+      },
+    [crop]
+  )
+
+  function analyze() {
+    setAnswer(
+      `تحليل مبدئي لـ ${crop}: العمر ${age} يوم.
+
+الاحتياج المائي:
+${info.water}
+
+التربة المناسبة:
+${info.soil}
+
+الملوحة:
+${info.salinity}
+
+نصيحة:
+${info.tips}
+
+تنبيه: هذا تحليل تجريبي للواجهة وليس تشخيصًا زراعيًا حقيقيًا.`
+    )
+  }
+
+  function changeGroup(value) {
+    setGroup(value)
+    setCrop(crops[value][0])
+    setAnswer('')
+  }
+
+  function askAssistant() {
+    if (!question.trim()) {
+      setAnswer('اكتب السؤال الأول.')
+      return
+    }
+
+    setAnswer(
+      `إجابة تجريبية لسؤالك:
+
+${question}
+
+ابدأ بفحص رطوبة التربة والجذور والأوراق، وسجل ظروف الري والتسميد. في النسخة الإنتاجية يمكن ربط هذه الواجهة بنموذج AI زراعي حقيقي وقاعدة بيانات للمحاصيل والطقس.`
+    )
+  }
+
+  return (
+    <div className="app">
+      <header>
+        <div className="brand">
+          <span className="brand-icon">🌱</span>
+
+          <div>
+            <b>زرع AI</b>
+            <small>المساعد الزراعي الذكي</small>
+          </div>
+        </div>
+
+        <nav>
+          <button
+            className={tab === 'home' ? 'active' : ''}
+            onClick={() => setTab('home')}
+          >
+            الرئيسية
+          </button>
+
+          <button
+            className={tab === 'diagnose' ? 'active' : ''}
+            onClick={() => setTab('diagnose')}
+          >
+            تشخيص بالصور
+          </button>
+
+          <button
+            className={tab === 'assistant' ? 'active' : ''}
+            onClick={() => setTab('assistant')}
+          >
+            اسأل المهندس AI
+          </button>
+        </nav>
+      </header>
+
+      <main>
+        {tab === 'home' && (
+          <>
+            <section className="hero">
+              <div className="hero-text">
+                <span className="pill">منصة زراعية ذكية</span>
+
+                <h1>
+                  ازرع صح…
+                  <em> بمعلومة أذكى.</em>
+                </h1>
+
+                <p>
+                  اختار المحصول والعمر، وخد معلومات إرشادية مبدئية.
+                  وارفع صورة أو اسأل المساعد عندما تحتاج تحليلًا أوسع.
+                </p>
+
+                <button
+                  className="cta"
+                  onClick={() => setTab('diagnose')}
+                >
+                  ابدأ التشخيص 📷
+                </button>
+              </div>
+
+              <div className="hero-card">
+                <div className="hero-card-icon">🌾</div>
+
+                <strong>
+                  {Object.values(crops).flat().length}+
+                </strong>
+
+                <span>
+                  محصول ونبات في قاعدة البداية
+                </span>
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-title">
+                <div>
+                  <h2>بيانات المحصول</h2>
+                  <p>حدد البيانات الأساسية للحصول على إرشاد مبدئي.</p>
+                </div>
+
+                <span>تخصيص سريع</span>
+              </div>
+
+              <div className="grid">
+                <label>
+                  <span>الفئة</span>
+
+                  <select
+                    value={group}
+                    onChange={e => changeGroup(e.target.value)}
+                  >
+                    {Object.keys(crops).map(item => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>المحصول</span>
+
+                  <select
+                    value={crop}
+                    onChange={e => setCrop(e.target.value)}
+                  >
+                    {crops[group].map(item => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>عمر النبات / المحصول (يوم)</span>
+
+                  <input
+                    type="number"
+                    min="0"
+                    value={age}
+                    onChange={e => setAge(e.target.value)}
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className="cards">
+              <article>
+                <span className="card-icon">💧</span>
+
+                <h3>المياه</h3>
+
+                <strong>{info.water}</strong>
+
+                <p>
+                  القرار النهائي يتأثر بالتربة والجو ومرحلة النمو.
+                </p>
+              </article>
+
+              <article>
+                <span className="card-icon">🧪</span>
+
+                <h3>التربة والملوحة</h3>
+
+                <strong>{info.salinity}</strong>
+
+                <p>{info.soil}</p>
+              </article>
+
+              <article>
+                <span className="card-icon">🩺</span>
+
+                <h3>برنامج اليوم</h3>
+
+                <strong>مراجعة الحقل</strong>
+
+                <p>{info.tips}</p>
+              </article>
+            </section>
+          </>
+        )}
+
+        {tab === 'diagnose' && (
+          <section className="panel page">
+            <div className="panel-title">
+              <div>
+                <h2>تشخيص النبات بالصور</h2>
+                <p>
+                  ارفع صورة واضحة للنبات للحصول على تحليل مبدئي.
+                </p>
+              </div>
+
+              <span>وضع تجريبي</span>
+            </div>
+
+            <label className="upload">
+              <div className="upload-icon">📷</div>
+
+              <strong>
+                {image
+                  ? 'تم اختيار الصورة'
+                  : 'اختار صورة من جهازك'}
+              </strong>
+
+              <small>
+                اضغط هنا لاختيار صورة من الهاتف أو الكمبيوتر
+              </small>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e =>
+                  setImage(e.target.files?.[0] || null)
+                }
+              />
+            </label>
+
+            {image && (
+              <div className="file">
+                📎 {image.name}
+              </div>
+            )}
+
+            <button
+              className="cta"
+              onClick={analyze}
+            >
+              اعمل تحليل مبدئي
+            </button>
+
+            {answer && (
+              <div className="result">
+                {answer}
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === 'assistant' && (
+          <section className="panel page">
+            <div className="panel-title">
+              <div>
+                <h2>اسأل المهندس AI</h2>
+                <p>
+                  اسأل عن الري أو التسميد أو التربة أو الآفات.
+                </p>
+              </div>
+
+              <span>مساعد زراعي</span>
+            </div>
+
+            <textarea
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              placeholder="مثال: عندي طماطم عمرها 40 يوم والورق السفلي بيصفر…"
+            />
+
+            <button
+              className="cta"
+              onClick={askAssistant}
+            >
+              اسأل الآن
+            </button>
+
+            {answer && (
+              <div className="result">
+                {answer}
+              </div>
+            )}
+          </section>
+        )}
+
+        <section className="about">
+          <h2>عن زرع AI</h2>
+
+          <p>
+            منصة عربية لتجميع الإرشاد الزراعي والبيانات المناخية
+            وتحليل صور النباتات في تجربة واحدة.
+          </p>
+
+          <p>
+            نسخة MVP قابلة للتطوير والربط لاحقًا بخدمات الذكاء
+            الاصطناعي وقواعد البيانات الزراعية.
+          </p>
+        </section>
+      </main>
+
+      <footer>
+        © 2026 زرع AI — نسخة MVP قابلة للتطوير
+      </footer>
+    </div>
+  )
+}
+
+createRoot(
+  document.getElementById('root')
+).render(<App />)src/style.css* {
+  box-sizing: border-box;
+}
+
+html {
+  direction: rtl;
+}
+
+body {
+  margin: 0;
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f4f7f2;
+  color: #17351f;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 7%;
+  background: #ffffff;
+  border-bottom: 1px solid #e2eadf;
+  gap: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  font-size: 34px;
+}
+
+.brand b {
+  display: block;
+  font-size: 22px;
+}
+
+.brand small {
+  color: #71806f;
+}
+
+nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+nav button {
+  border: 0;
+  background: transparent;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #49604d;
+}
+
+nav button.active,
+nav button:hover {
+  background: #e8f1e6;
+  color: #17351f;
+}
+
+main {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.7fr 0.7fr;
+  gap: 24px;
+  padding: 60px 20px 28px;
+  align-items: center;
+}
+
+.hero-text {
+  text-align: right;
+}
+
+.pill {
+  display: inline-block;
+  background: #dfeedd;
+  padding: 7px 12px;
+  border-radius: 99px;
+  color: #35633b;
+  font-size: 14px;
+}
+
+.hero h1 {
+  font-size: 46px;
+  margin: 18px 0 12px;
+  line-height: 1.2;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: #3d8a4b;
+}
+
+.hero p {
+  font-size: 18px;
+  line-height: 1.9;
+  color: #5d6e60;
+  max-width: 700px;
+}
+
+.hero-card {
+  background: #ffffff;
+  border: 1px solid #dfebdc;
+  border-radius: 22px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(23, 53, 31, 0.08);
+}
+
+.hero-card-icon {
+  font-size: 48px;
+}
+
+.hero-card strong {
+  display: block;
+  font-size: 42px;
+  margin: 8px;
+}
+
+.hero-card span {
+  display: block;
+  font-size: 14px;
+  color: #657466;
+}
+
+.cta {
+  border: 0;
+  background: #3d8a4b;
+  color: #ffffff;
+  padding: 13px 20px;
+  border-radius: 11px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.cta:hover {
+  background: #2f713b;
+}
+
+.panel {
+  background: #ffffff;
+  margin: 18px 20px;
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid #e0e9de;
+  box-shadow: 0 8px 25px rgba(23, 53, 31, 0.05);
+}
+
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.panel-title h2 {
+  margin: 0 0 7px;
+}
+
+.panel-title p {
+  margin: 0;
+  color: #617064;
+}
+
+.panel-title > span {
+  color: #71806f;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.grid label {
+  display: block;
+  font-weight: 700;
+}
+
+.grid label > span {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.grid select,
+.grid input,
+textarea {
+  width: 100%;
+  border: 1px solid #d7e2d4;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fbfdfb;
+  color: #17351f;
+}
+
+.grid select:focus,
+.grid input:focus,
+textarea:focus {
+  outline: 2px solid #cde3c9;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: 10px 20px 25px;
+}
+
+.cards article {
+  background: #ffffff;
+  border: 1px solid #e0e9de;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 5px 18px rgba(23, 53, 31, 0.04);
+}
+
+.card-icon {
+  font-size: 28px;
+}
+
+.cards h3 {
+  margin: 10px 0;
+}
+
+.cards strong {
+  display: block;
+  line-height: 1.6;
+}
+
+.cards p,
+.page p,
+.about p {
+  color: #617064;
+  line-height: 1.8;
+}
+
+.page {
+  min-height: 350px;
+}
+
+.upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px dashed #c9dbc6;
+  border-radius: 14px;
+  padding: 35px;
+  text-align: center;
+  cursor: pointer;
+  margin: 18px 0;
+  background: #fbfdfb;
+}
+
+.upload:hover {
+  background: #f3f8f1;
+}
+
+.upload-icon {
+  font-size: 42px;
+}
+
+.upload small {
+  color: #71806f;
+}
+
+.upload input {
+  display: none;
+}
+
+.file {
+  background: #eef6ec;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.result {
+  white-space: pre-wrap;
+  background: #f0f7ee;
+  border-right: 4px solid #3d8a4b;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 18px;
+  line-height: 1.9;
+}
+
+textarea {
+  min-height: 150px;
+  resize: vertical;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.about {
+  margin: 10px 20px 30px;
+  background: #eaf3e7;
+  padding: 25px;
+  border-radius: 18px;
+}
+
+.about h2 {
+  margin-top: 0;
+}
+
+footer {
+  text-align: center;
+  padding: 22px;
+  color: #70806f;
+  border-top: 1px solid #dfe8dc;
+  background: #ffffff;
+}
+
+@media (max-width: 760px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  nav {
+    width: 100%;
+  }
+
+  nav button {
+    flex: 1;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 35px;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .hero-card {
+    display: none;
+  }
+
+  .grid,
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-title {
+    flex-direction: column;
+  }
+}AgriNova/
+│
+├── package.json
+├── index.html
+├── vite.config.js
+│
+└── src/
+    ├── main.jsx
+    └── style.css
